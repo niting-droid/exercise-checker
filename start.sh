@@ -42,10 +42,10 @@ mkdir -p uploads output data models
 
 echo "🚀 Starting Gunicorn server on port $PORT..."
 
-# Test if main app can start
+# Test if main app can start, use fallback if not
 echo "🧪 Testing main app startup..."
 if python3 -c "import app; print('Main app imports successfully')" 2>/dev/null; then
-    echo "✅ Main app test passed, starting full app..."
+    echo "✅ Main app test passed, starting full Exercise Analyzer..."
     exec gunicorn \
         --bind 0.0.0.0:${PORT} \
         --workers 1 \
@@ -55,17 +55,21 @@ if python3 -c "import app; print('Main app imports successfully')" 2>/dev/null; 
         --max-requests-jitter 100 \
         --preload \
         --log-level info \
+        --access-logfile - \
+        --error-logfile - \
         app:app
 else
-    echo "⚠️ Main app test failed, but continuing with main app anyway..."
+    echo "⚠️ Main app test failed, starting fallback app..."
+    echo "🔧 This usually means there's an import or dependency issue"
     exec gunicorn \
         --bind 0.0.0.0:${PORT} \
         --workers 1 \
-        --timeout 300 \
+        --timeout 60 \
         --keep-alive 2 \
         --max-requests 1000 \
         --max-requests-jitter 100 \
-        --preload \
         --log-level info \
-        app:app
+        --access-logfile - \
+        --error-logfile - \
+        fallback_app:app
 fi
